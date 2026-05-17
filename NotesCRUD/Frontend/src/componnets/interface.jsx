@@ -1,4 +1,27 @@
+import { useEffect } from "react";
+import { useState } from "react";
+
 function NotesInterface() {
+  const [notes, setNotes] = useState([]);
+
+  useEffect(() => {
+  async function getNotes() {
+    try {
+      const response = await fetch(
+        "http://localhost:14526/notes/getAll"
+      );
+
+      const data = await response.json();
+
+      setNotes(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  getNotes();
+}, []);
+
   return (
     <div className="w-full h-screen bg-(--background) flex">
       <div className="w-1/5 bg-(--sideBar) flex flex-col min-w-60 relative shrink-0">
@@ -156,7 +179,7 @@ function NotesInterface() {
           </div>
         </div>
         <div className="p-8 w-full">
-            <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempore, voluptates. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Doloremque quia expedita quisquam minus quas distinctio culpa nulla et qui illo atque, dolore sint accusantium consectetur! Exercitationem voluptatum eius reprehenderit. Accusamus!</div>
+          <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempore, voluptates. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Doloremque quia expedita quisquam minus quas distinctio culpa nulla et qui illo atque, dolore sint accusantium consectetur! Exercitationem voluptatum eius reprehenderit. Accusamus!</div>
         </div>
       </div>
     </div>
