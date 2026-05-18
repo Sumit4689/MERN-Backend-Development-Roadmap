@@ -1,31 +1,41 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function NotesInterface() {
   const [notes, setNotes] = useState([]);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [activeNote, setActiveNote] = useState({})
 
   useEffect(() => {
-  async function getNotes() {
-    try {
-      const response = await fetch(
-        "http://localhost:14526/notes/getAll"
-      );
+    const note = notes.find((note) => note._id == selectedNote)
+    setActiveNote(note || null)
+    console.log(note?.["_id"])
+  },[selectedNote, notes])
 
-      const data = await response.json();
-
-      setNotes(data);
-    } catch (error) {
-      console.log(error);
-    }
+  function clickedNote(id){
+    setSelectedNote(id)
   }
 
-  getNotes();
-}, []);
+  useEffect(() => {
+    async function fetchNotes() {
+      try {
+        const response = await fetch("http://localhost:14526/notes/getAll");
+        const data = await response.json();
+        setNotes(data);
+        if (data.length > 0) {
+        setSelectedNote(data[0]._id);
+      }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchNotes();
+  }, []);
 
   return (
     <div className="w-full h-screen bg-(--background) flex">
-      <div className="w-1/5 bg-(--sideBar) flex flex-col min-w-60 relative shrink-0">
-        <div className="w-full flex flex-col px-6 py-4 border-b border-b-(--border)">
+      <div className="w-1/5 bg-(--sideBar) flex flex-col min-w-60 relative shrink-0 border-r border-r-(--border)">
+        <div className="w-full flex flex-col px-6 py-4 border-b border-b-(--border) ">
           <h1 className="text-white font-medium text-xl">My notes</h1>
           <div className="border border-(--border) rounded-md mt-2 px-3 py-0.5 bg-(--background) text-white flex items-center w-full">
             <svg
@@ -51,7 +61,7 @@ function NotesInterface() {
             ></input>
           </div>
         </div>
-        <div className="w-full flex flex-wrap px-6 py-2 flex-row gap-2 text-[13px] text-gray-400 justify-around">
+        <div className="w-full flex flex-wrap px-6 py-2 flex-row gap-2 text-[13px] text-gray-400 justify-around ">
           <p className="border border-(--border) px-2.5 rounded-2xl bg-indigo-400 text-gray-800">
             All
           </p>
@@ -62,41 +72,30 @@ function NotesInterface() {
           <p className="border border-(--border) px-2.5 rounded-2xl">Ideas</p>
           {/* <p className="border border-(--border) px-2.5 rounded-2xl">Projects</p> */}
         </div>
-        <div className="w-full flex flex-col px-3 py-2">
-          <div className="border border-(--border) p-4 rounded-lg bg-(--background) text-base">
-            <h1 className="text-white font-medium">Project launch</h1>
-            <p
-              className="truncate text-white text-sm mt-1
+        <div className="w-full flex flex-col px-3 py-2 hide-scrollbar overflow-y-scroll">
+          {notes.map((note) => (
+            <div className={`p-4 rounded-lg text-base ${
+              selectedNote == note._id ? 'border border-(--border) bg-(--background)' : ''
+            }`} key={note._id} onClick={() => clickedNote(note._id)
+              
+            }>
+              <h1 className="text-white font-medium">{note.title}</h1>
+              <p
+                className="truncate text-white text-sm mt-1
                         "
-            >
-              finalize landing page, notify the Lorem ipsum dolor sit amet
-              consectetur adipisicing elit. Eum, voluptate.
-            </p>
-            <div className="flex items-center justify-between text-[13px] mt-2">
-              <p className="text-white">Today</p>
-              <p className="border border-(--border) px-2.5 rounded-2xl text-indigo-400 bg-indigo-50">
-                Work
+              >
+                {note.content}
               </p>
+              <div className="flex items-center justify-between text-[13px] mt-2">
+                <p className="text-white">Yesterday</p>
+                <p className="border border-(--border) px-2.5 rounded-2xl text-indigo-400 bg-indigo-50">
+                  Personal
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="p-4 rounded-lg text-base">
-            <h1 className="text-white font-medium">Book Recommendation</h1>
-            <p
-              className="truncate text-white text-sm mt-1
-                        "
-            >
-              Atomic Habit, Deep Work, SICP Lorem ipsum dolor sit amet
-              consectetur.
-            </p>
-            <div className="flex items-center justify-between text-[13px] mt-2">
-              <p className="text-white">Yesterday</p>
-              <p className="border border-(--border) px-2.5 rounded-2xl text-indigo-400 bg-indigo-50">
-                Personal
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
-        <div className="absolute bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full">
+        <div className="absolute bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full bg-(--background) border-r border-r-(--border) scroll-hii">
           <div className="w-full border border-(--border) bg-(--background) rounded-md px-3 py-0.5">
             <p className="text-center text-white">+ New note</p>
           </div>
@@ -105,7 +104,7 @@ function NotesInterface() {
       <div className="min-w-4/5">
         <div className="w-full border-b border-b-(--border) px-8 py-4 flex items-center justify-between">
           <div className="text-white">
-            <h1>Notes / Project Launch Checklist</h1>
+            <h1>Notes / {activeNote?.["title"]}</h1>
           </div>
           <div className="flex items-center gap-4">
             <svg
@@ -144,7 +143,7 @@ function NotesInterface() {
         <div className="p-8 flex flex-col w-full">
           <div className="w-full border-b border-b-(--border) pb-6">
             <h1 className="border border-(--border) p-2 rounded-md text-white font-medium">
-              Project launch Checklist
+              {activeNote?.["title"]}
             </h1>
             <div className="flex gap-6 mt-3 text-white">
               <div className="flex items-center gap-2">
@@ -159,7 +158,7 @@ function NotesInterface() {
                   <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />
                   <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
                 </svg>
-                <span className="text-sm">14 May 2026</span>
+                <span className="text-sm">{activeNote?.["createdAt"]}</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg
@@ -173,13 +172,13 @@ function NotesInterface() {
                   <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0" />
                   <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1m0 5.586 7 7L13.586 9l-7-7H2z" />
                 </svg>
-                <span className="text-sm">Work</span>
+                <span className="text-sm">{activeNote?.["tag"]}</span>
               </div>
             </div>
           </div>
         </div>
         <div className="p-8 w-full">
-          <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempore, voluptates. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Doloremque quia expedita quisquam minus quas distinctio culpa nulla et qui illo atque, dolore sint accusantium consectetur! Exercitationem voluptatum eius reprehenderit. Accusamus!</div>
+          <div>{activeNote?.["content"]}</div>
         </div>
       </div>
     </div>
