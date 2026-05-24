@@ -10,8 +10,6 @@ const app = express()
 
 app.use(cors())
 
-cors.ge
-
 app.use(express.json())
 
 app.use("/notes", require("./routes/notesRouter"))

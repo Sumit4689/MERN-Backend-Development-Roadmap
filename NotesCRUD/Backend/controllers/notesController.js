@@ -19,4 +19,12 @@ const getNotes = async(req, res) => {
 
 }
 
+const addNote = async(req, res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 module.exports = getNotes
