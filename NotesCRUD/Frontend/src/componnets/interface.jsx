@@ -10,8 +10,12 @@ function NotesInterface() {
   const [btnAdd, setBtnAdd] = useState(false);
   const [layoutMode, setLayoutMode] = useState("view");
   const [noteTitle, setNoteTitle] = useState("");
-
-  useEffect(() => { console.log(layoutMode) }, [layoutMode])
+  const [noteTag, setNoteTag] = useState("");
+  const [noteContent, setNoteContent] = useState({
+    title: "",
+    content: "",
+    tag: ""
+  });
 
   useEffect(() => {
     const note = notes.find((note) => note._id == selectedNote)
@@ -22,9 +26,29 @@ function NotesInterface() {
     setSelectedNote(id)
   }
 
-  function addNotes(){
+  async function addNotes() {
+    try {
+      const response = await fetch("http://localhost:14526/notes/addNote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(noteContent),
+      });
 
+      const data = await response.json();
+
+      console.log(data);
+    } catch (error) {
+      console.log(error)
+    }
   }
+
+  useEffect(() => {
+    if (layoutMode == "create") {
+      addNotes()
+    }
+  }, [noteContent])
 
   useEffect(() => {
     async function fetchNotes() {
@@ -78,7 +102,7 @@ function NotesInterface() {
             .filter((note) => filter === "All" || note.tag === filter)
             .filter((note) => search == null || note.title.toLowerCase().includes(search.toLowerCase()))
             .map((note) => (
-              <div className={`p-4 rounded-lg text-base cursor-pointer ${layoutMode === "view"? selectedNote == note._id ? 'border border-(--border) bg-(--background)' : '' : ""
+              <div className={`p-4 rounded-lg text-base cursor-pointer ${layoutMode === "view" ? selectedNote == note._id ? 'border border-(--border) bg-(--background)' : '' : ""
                 }`} key={note._id} onClick={() => clickedNote(note._id)
 
                 }>
@@ -100,24 +124,24 @@ function NotesInterface() {
         </div>
         <div className="absolute bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full bg-(--background) border-r border-r-(--border) scroll-hii">
           <div className="w-full border border-(--border) bg-(--background) rounded-md px-3 py-0.5 cursor-pointer" onClick={() => setLayoutMode("create")}>
-            <p className="text-center text-white hover:text-indigo-400"><i class="bi bi-plus-lg"></i> New note</p>
+            <p className="text-center text-white hover:text-indigo-400"><i className="bi bi-plus-lg"></i> New note</p>
           </div>
         </div>
       </div>
       <div className="min-w-4/5">
         <div className="w-full border-b border-b-(--border) px-8 py-4 flex items-center justify-between">
           <div className="text-white">
-            <h1>Notes / {layoutMode==="view"? activeNote?.['title'] : noteTitle}</h1>
+            <h1>Notes / {layoutMode === "view" ? activeNote?.['title'] : noteTitle}</h1>
           </div>
           <div className="flex items-center gap-4">
-            <i className="bi bi-floppy text-white cursor-pointer hover:text-indigo-400"></i>
+            <i className="bi bi-floppy text-white cursor-pointer hover:text-indigo-400" onClick={() => addNotes()}></i>
             <i className="bi bi-trash text-white cursor-pointer hover:text-indigo-400"></i>
             <i className="bi bi-x-circle text-white cursor-pointer hover:text-red-600"></i>
           </div>
         </div>
         <div className="p-8 flex flex-col w-full">
           <div className="w-full border-b border-b-(--border) pb-6">
-            <input type="text" onChange={(e) => {setNoteTitle(e.target.value)}} defaultValue={layoutMode==="view"? activeNote?.['title'] : ""} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view"? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view"? true : false} required/>
+            <input type="text" onChange={(e) => { setNoteContent({ ...noteContent, title: e.target.value }) }} defaultValue={layoutMode === "view" ? activeNote?.['title'] : ""} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view" ? true : false} required name="noteTitle" id="noteTitle" />
             {/* <h1 className="border border-(--border) p-2 rounded-md text-white font-medium">
               {activeNote?.["title"]}
             </h1> */}
@@ -134,7 +158,7 @@ function NotesInterface() {
                   <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />
                   <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
                 </svg>
-                <span className="text-sm">{layoutMode==="view"? activeNote?.["createdAt"] : ""}</span>
+                <span className="text-sm">{layoutMode === "view" ? activeNote?.["createdAt"] : ""}</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg
@@ -148,14 +172,14 @@ function NotesInterface() {
                   <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0" />
                   <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1m0 5.586 7 7L13.586 9l-7-7H2z" />
                 </svg>
-                <input type="text" defaultValue={layoutMode==="view"? activeNote?.["tag"] : "" || "All"} readOnly={layoutMode === "view"? true : false} required className={`${layoutMode === "view"? " cursor-default focus:outline-none" : ""}`} />
+                <input type="text" defaultValue={layoutMode === "view" ? activeNote?.["tag"] : "" || "All"} readOnly={layoutMode === "view" ? true : false} required className={`${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} onClick={(e) => setNoteContent({ ...noteContent, tag: e.target.value })} />
                 {/* <span className="text-sm">{activeNote?.["tag"]}</span> */}
               </div>
             </div>
           </div>
         </div>
         <div className="p-8 w-full">
-          <textarea name="" id="" className={`text-white text-base w-full resize-none focus:outline-none h-100 ${layoutMode === "view"? " cursor-default" : ""}`} defaultValue={layoutMode==="view"? activeNote?.["content"] : "" } readOnly={layoutMode === "view"? true : false} required></textarea>
+          <textarea name="" id="" className={`text-white text-base w-full resize-none focus:outline-none h-100 ${layoutMode === "view" ? " cursor-default" : ""}`} defaultValue={layoutMode === "view" ? activeNote?.["content"] : ""} readOnly={layoutMode === "view" ? true : false} required onClick={(e) => setNoteContent({ ...noteContent, content: e.target.value })}></textarea>
           {/* <div className="text-white text-base">{activeNote?.["content"]}</div> */}
         </div>
       </div>
