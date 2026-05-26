@@ -10,11 +10,10 @@ function NotesInterface() {
   const [btnAdd, setBtnAdd] = useState(false);
   const [layoutMode, setLayoutMode] = useState("view");
   const [noteTitle, setNoteTitle] = useState("");
-  const [noteTag, setNoteTag] = useState("");
   const [noteContent, setNoteContent] = useState({
     title: "",
     content: "",
-    tag: ""
+    tag: null
   });
 
   useEffect(() => {
@@ -46,7 +45,9 @@ function NotesInterface() {
 
   useEffect(() => {
     if (layoutMode == "create") {
-      addNotes()
+      setTimeout(() => {
+        addNotes()
+      }, 2000);
     }
   }, [noteContent])
 
