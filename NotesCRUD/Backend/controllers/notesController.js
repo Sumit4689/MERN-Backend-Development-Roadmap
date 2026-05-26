@@ -22,27 +22,27 @@ const getNotes = async (req, res) => {
 const addNote = async (req, res) => {
     try {
         const { title, content, tag } = req.body
-        const existingNote = await notes.findOne({
-            title,
-            content,
-            tag
-        })
+        // const existingNote = await notes.findOne({
+        //     title,
+        //     content,
+        //     tag
+        // })
 
-        if (existingNote) {
-            const note = await notes.updateOne(
-                { _id: existingNote._id },
-                {
-                    $set: {
-                        title,
-                        content,
-                        tag
-                    }
-                })
+        // if (existingNote) {
+        //     const note = await notes.updateOne(
+        //         { _id: existingNote._id },
+        //         {
+        //             $set: {
+        //                 title,
+        //                 content,
+        //                 tag
+        //             }
+        //         })
 
-            return res.status(200).json({
-                message : "note updated successfully"
-            })
-        }
+        //     return res.status(200).json({
+        //         message : "note updated successfully"
+        //     })
+        // }
 
         const note = await notes.create({
             title,
@@ -52,7 +52,8 @@ const addNote = async (req, res) => {
 
         if (note) {
             res.status(201).json({
-                message: "note Saved Successfully"
+                message: "note Saved Successfully",
+                id : note._id
             })
         } else {
             res.status(400).json({

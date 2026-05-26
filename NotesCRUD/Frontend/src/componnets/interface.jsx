@@ -16,15 +16,22 @@ function NotesInterface() {
     tag: null
   });
 
+  /** Set note selected in sidebar as activenote to display it in main layout 
+  and if selectednote is chnaged suddenly in-between of creation of new note then automatically save that new note. **/
   useEffect(() => {
     const note = notes.find((note) => note._id == selectedNote)
     setActiveNote(note || null)
+
+    if(layoutMode == "create" && noteContent.title === "" && noteContent.content == ""){
+      addNotes()
+    }
   }, [selectedNote, notes])
 
-  function clickedNote(id) {
-    setSelectedNote(id)
+  async function saveNote() {
+    addNotes()
   }
 
+  // Function to save new note into the DB. 
   async function addNotes() {
     try {
       const response = await fetch("http://localhost:14526/notes/addNote", {
@@ -37,38 +44,34 @@ function NotesInterface() {
 
       const data = await response.json();
 
-      console.log(data);
+      fetchNotes()
+
+      console.log(data)
+
     } catch (error) {
       console.log(error)
     }
   }
 
-  useEffect(() => {
-    if (layoutMode == "create") {
-      setTimeout(() => {
-        addNotes()
-      }, 2000);
-    }
-  }, [noteContent])
-
-  useEffect(() => {
-    async function fetchNotes() {
-      try {
-        const response = await fetch("http://localhost:14526/notes/getAll");
-        const data = await response.json();
-        setNotes(data);
-        if (data.length > 0) {
-          setSelectedNote(data[0]._id);
-          const tagsuni = []
-          data.map((note) => tagsuni.push(note.tag))
-          setTags([...new Set(tagsuni)])
-        }
-      } catch (error) {
-        console.log(error);
+  async function fetchNotes() {
+    try {
+      const response = await fetch("http://localhost:14526/notes/getAll");
+      const data = await response.json();
+      setNotes(data);
+      if (data.length > 0) {
+        setSelectedNote(data[0]._id);
+        const tagsuni = []
+        data.map((note) => tagsuni.push(note.tag))
+        setTags([...new Set(tagsuni)])
       }
+    } catch (error) {
+      console.log(error);
     }
-
+  }
+  // function to fetch all notes from the backend.
+  useEffect(() => {
     fetchNotes();
+    
   }, []);
 
   return (
@@ -104,8 +107,7 @@ function NotesInterface() {
             .filter((note) => search == null || note.title.toLowerCase().includes(search.toLowerCase()))
             .map((note) => (
               <div className={`p-4 rounded-lg text-base cursor-pointer ${layoutMode === "view" ? selectedNote == note._id ? 'border border-(--border) bg-(--background)' : '' : ""
-                }`} key={note._id} onClick={() => clickedNote(note._id)
-
+                }`} key={note._id} onClick={() => setSelectedNote(note._id)
                 }>
                 <h1 className="text-white font-medium">{note.title}</h1>
                 <p
@@ -142,7 +144,7 @@ function NotesInterface() {
         </div>
         <div className="p-8 flex flex-col w-full">
           <div className="w-full border-b border-b-(--border) pb-6">
-            <input type="text" onChange={(e) => { setNoteContent({ ...noteContent, title: e.target.value }) }} defaultValue={layoutMode === "view" ? activeNote?.['title'] : ""} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view" ? true : false} required name="noteTitle" id="noteTitle" />
+            <input type="text" onChange={(e) => {setNoteTitle(e.target.value); setNoteContent({ ...noteContent, title: e.target.value }) }} defaultValue={layoutMode === "view" ? activeNote?.['title'] : ""} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view" ? true : false} required name="noteTitle" id="noteTitle" />
             {/* <h1 className="border border-(--border) p-2 rounded-md text-white font-medium">
               {activeNote?.["title"]}
             </h1> */}
@@ -173,7 +175,7 @@ function NotesInterface() {
                   <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0" />
                   <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1m0 5.586 7 7L13.586 9l-7-7H2z" />
                 </svg>
-                <input type="text" defaultValue={layoutMode === "view" ? activeNote?.["tag"] : "" || "All"} readOnly={layoutMode === "view" ? true : false} required className={`${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} onClick={(e) => setNoteContent({ ...noteContent, tag: e.target.value })} />
+                <input type="text" defaultValue={layoutMode === "view" ? activeNote?.["tag"] : ""} readOnly={layoutMode === "view" ? true : false} required className={`${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} onChange={(e) => setNoteContent({ ...noteContent, tag: e.target.value })} />
                 {/* <span className="text-sm">{activeNote?.["tag"]}</span> */}
               </div>
             </div>
