@@ -22,27 +22,6 @@ const getNotes = async (req, res) => {
 const addNote = async (req, res) => {
     try {
         const { title, content, tag } = req.body
-        // const existingNote = await notes.findOne({
-        //     title,
-        //     content,
-        //     tag
-        // })
-
-        // if (existingNote) {
-        //     const note = await notes.updateOne(
-        //         { _id: existingNote._id },
-        //         {
-        //             $set: {
-        //                 title,
-        //                 content,
-        //                 tag
-        //             }
-        //         })
-
-        //     return res.status(200).json({
-        //         message : "note updated successfully"
-        //     })
-        // }
 
         const note = await notes.create({
             title,
@@ -53,7 +32,8 @@ const addNote = async (req, res) => {
         if (note) {
             res.status(201).json({
                 message: "note Saved Successfully",
-                id : note._id
+                id : note._id,
+                note : note
             })
         } else {
             res.status(400).json({
@@ -64,6 +44,32 @@ const addNote = async (req, res) => {
         console.log(error)
         res.status(500).json({
             message: "Failed to save note"
+        })
+    }
+}
+
+const deleteNote = async (req, res) =>{
+    try {
+        const id = req.body;
+    
+        if(!id){
+            res.status(400).json({
+                message : "invalid note id"
+            })
+        }
+
+        const response = await notes.findByIdAndDelete(id);
+
+        if(response){
+            res.send(200).json({
+                message: "note deleted successfully"
+            })
+            console.log(response)
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message : "Failed to delete note"
         })
     }
 }
