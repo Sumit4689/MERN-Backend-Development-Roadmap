@@ -32,8 +32,8 @@ const addNote = async (req, res) => {
         if (note) {
             res.status(201).json({
                 message: "note Saved Successfully",
-                id : note._id,
-                note : note
+                id: note._id,
+                note: note
             })
         } else {
             res.status(400).json({
@@ -48,29 +48,27 @@ const addNote = async (req, res) => {
     }
 }
 
-const deleteNote = async (req, res) =>{
+const deleteNote = async (req, res) => {
     try {
-        const {id} = req.body;
-        console.log(id)
-    
-        if(!id){
+        const { id } = req.body;
+
+        if (!id) {
             return res.status(400).json({
-                message : "invalid note id"
+                message: "invalid note id"
             })
         }
 
         const response = await notes.findByIdAndDelete(id);
 
-        if(response){
-            return res.send(200).json({
-                message: "note deleted successfully"
+        if (response) {
+            return res.status(200).json({
+                message: "Note Deleted successfully"
             })
-            console.log(response)
         }
     } catch (error) {
         console.log(error)
         return res.status(500).json({
-            message : "Failed to delete note"
+            message: "Failed to delete note"
         })
     }
 }

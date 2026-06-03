@@ -32,6 +32,10 @@ function NotesInterface() {
   // Function to save new note into the DB. 
   async function addNotes() {
     try {
+      if (!noteContent.title.trim()) {
+        alert("Title is required")
+        return
+      }
       const response = await fetch("http://localhost:14526/notes/addNote", {
         method: "POST",
         headers: {
@@ -41,6 +45,12 @@ function NotesInterface() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message)
+        return
+      }
+
       alert(data.message)
 
       await fetchNotes()
@@ -65,40 +75,54 @@ function NotesInterface() {
       const response = await fetch("http://localhost:14526/notes/getAll");
       const data = await response.json();
       setNotes(data);
-      const uniqueTags = [...new Set(data.map(note => note.tag))];
+      const uniqueTags = [...new Set(data.map(note => note.tag).filter(tag => tag?.trim()))];
       setTags(uniqueTags);
 
       if (!selectedNote && data.length > 0) {
         setSelectedNote(data[0]._id);
       }
+
+      return data
     } catch (error) {
       console.log(error);
+      return []
     }
   }
   // function to fetch all notes from the backend.
   useEffect(() => {
     fetchNotes();
-
   }, []);
 
   async function deleteNote(id) {
     try {
+      if (!window.confirm("Are you sure about deleting the note?")) {
+        return
+      }
       const response = await fetch("http://localhost:14526/notes/deleteNote", {
-        method : "DELETE",
-        headers : {"Content-Type": "application/json"},
-        body : JSON.stringify({
-          id : id
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: id
         })
       })
       const data = await response.json();
 
-      alert(data.message)
-      await fetchNotes()
+      if (!response.ok) {
+        alert(data.message);
+        return;
+      }
 
-      // if(selectedNote === id){
-      //   const remainingNotes = 
-      // }
-      
+      alert(data.message)
+      const updatedNotes = await fetchNotes()
+
+      if (selectedNote === id) {
+        if (updatedNotes.length > 0) {
+          setSelectedNote(updatedNotes[0]._id)
+        } else {
+          setSelectedNote(null)
+        }
+      }
+
     } catch (error) {
       console.log(error)
       console.log("Something went wrong")
@@ -107,7 +131,7 @@ function NotesInterface() {
 
   return (
     <div className="w-full h-screen bg-(--background) flex">
-      <div className="w-1/5 bg-(--sideBar) flex flex-col min-w-60 relative shrink-0 border-r border-r-(--border)">
+      <div className="w-1/5 bg-(--sideBar) flex flex-col min-w-60 shrink-0 border-r border-r-(--border)">
         <div className="w-full flex flex-col px-6 py-4 border-b border-b-(--border) ">
           <h1 className="text-white font-medium text-xl">My notes</h1>
           <div className="border border-(--border) rounded-md mt-2 px-3 py-0.5 bg-(--background) text-white flex items-center w-full">
@@ -132,7 +156,7 @@ function NotesInterface() {
             </p>
           ))}
         </div>
-        <div className="w-full flex flex-col px-3 py-2 hide-scrollbar overflow-y-scroll gap-1.5">
+        <div className="w-full flex flex-1 flex-col px-3 py-2 hide-scrollbar overflow-y-scroll gap-1.5">
           {notes
             .filter((note) => filter === "All" || note.tag === filter)
             .filter((note) => note.title.toLowerCase().includes(search.toLowerCase()))
@@ -156,7 +180,7 @@ function NotesInterface() {
               </div>
             ))}
         </div>
-        <div className="absolute bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full bg-(--background) border-r border-r-(--border) scroll-hii">
+        <div className="bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full bg-(--background) border-r border-r-(--border) scroll-hii">
           <div className="w-full border border-(--border) bg-(--background) rounded-md px-3 py-0.5 cursor-pointer" onClick={() => {
             setLayoutMode("create");
 
