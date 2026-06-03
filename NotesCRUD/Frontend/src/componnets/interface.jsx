@@ -6,28 +6,25 @@ function NotesInterface() {
   const [activeNote, setActiveNote] = useState({});
   const [filter, setFilter] = useState("All");
   const [tags, setTags] = useState([]);
-  const [search, setSearch] = useState(null);
-  const [btnAdd, setBtnAdd] = useState(false);
+  const [search, setSearch] = useState("");
   const [layoutMode, setLayoutMode] = useState("view");
-  const [noteTitle, setNoteTitle] = useState("");
-  
-
+  const [noteContent, setNoteContent] = useState({
+    title: "",
+    content: "",
+    tag: ""
+  });
 
   /** Set note selected in sidebar as activenote to display it in main layout 
   and if selectednote is chnaged suddenly in-between of creation of new note then automatically save that new note. **/
   useEffect(() => {
-    const note = notes.find((note) => note._id == selectedNote)
+    const note = notes.find((note) => note._id === selectedNote)
     setActiveNote(note || null)
 
   }, [selectedNote, notes])
 
-  async function saveNote() {
-    addNotes()
-  }
-
-  async function confirmSave(id){
-    if(window.confirm("Window will close without saving the note")){
-      setSelectedNote(id); 
+  async function confirmSave(id) {
+    if (window.confirm("Window will close without saving the note")) {
+      setSelectedNote(id);
       setLayoutMode('view')
     }
   }
@@ -46,9 +43,17 @@ function NotesInterface() {
       const data = await response.json();
       alert(data.message)
 
-      fetchNotes()
+      await fetchNotes()
 
       setSelectedNote(data.id)
+
+      setNoteContent({
+        title: "",
+        content: "",
+        tag: ""
+      });
+
+      setLayoutMode("view")
 
     } catch (error) {
       console.log(error)
@@ -60,11 +65,11 @@ function NotesInterface() {
       const response = await fetch("http://localhost:14526/notes/getAll");
       const data = await response.json();
       setNotes(data);
+      const uniqueTags = [...new Set(data.map(note => note.tag))];
+      setTags(uniqueTags);
+
       if (!selectedNote && data.length > 0) {
         setSelectedNote(data[0]._id);
-        const tagsuni = []
-        data.map((note) => tagsuni.push(note.tag))
-        setTags([...new Set(tagsuni)])
       }
     } catch (error) {
       console.log(error);
@@ -73,8 +78,32 @@ function NotesInterface() {
   // function to fetch all notes from the backend.
   useEffect(() => {
     fetchNotes();
-    
+
   }, []);
+
+  async function deleteNote(id) {
+    try {
+      const response = await fetch("http://localhost:14526/notes/deleteNote", {
+        method : "DELETE",
+        headers : {"Content-Type": "application/json"},
+        body : JSON.stringify({
+          id : id
+        })
+      })
+      const data = await response.json();
+
+      alert(data.message)
+      await fetchNotes()
+
+      // if(selectedNote === id){
+      //   const remainingNotes = 
+      // }
+      
+    } catch (error) {
+      console.log(error)
+      console.log("Something went wrong")
+    }
+  }
 
   return (
     <div className="w-full h-screen bg-(--background) flex">
@@ -94,11 +123,11 @@ function NotesInterface() {
           </div>
         </div>
         <div className="w-full flex flex-wrap px-6 py-2 flex-row gap-2 text-[13px] text-gray-400">
-          <p className={`border border-(--border) px-2.5 rounded-2xl cursor-pointer ${filter == "All" ? 'bg-indigo-400 text-gray-800' : ''}`} onClick={() => setFilter("All")}>
+          <p className={`border border-(--border) px-2.5 rounded-2xl cursor-pointer ${filter === "All" ? 'bg-indigo-400 text-gray-800' : ''}`} onClick={() => setFilter("All")}>
             All
           </p>
           {tags.map((tag) => (
-            <p className={`border hover:bg-indigo-400 hover:text-gray-800 border-(--border) px-2.5 rounded-2xl cursor-pointer ${filter == tag ? 'bg-indigo-400 text-gray-800' : ''}`} key={tag} onClick={() => setFilter(tag)}>
+            <p className={`border hover:bg-indigo-400 hover:text-gray-800 border-(--border) px-2.5 rounded-2xl cursor-pointer ${filter === tag ? 'bg-indigo-400 text-gray-800' : ''}`} key={tag} onClick={() => setFilter(tag)}>
               {tag}
             </p>
           ))}
@@ -106,10 +135,10 @@ function NotesInterface() {
         <div className="w-full flex flex-col px-3 py-2 hide-scrollbar overflow-y-scroll gap-1.5">
           {notes
             .filter((note) => filter === "All" || note.tag === filter)
-            .filter((note) => search == null || note.title.toLowerCase().includes(search.toLowerCase()))
+            .filter((note) => note.title.toLowerCase().includes(search.toLowerCase()))
             .map((note) => (
-              <div className={`p-4 rounded-lg text-base cursor-pointer ${layoutMode === "view" ? selectedNote == note._id ? 'border border-(--border) bg-(--background)' : '' : ""
-                } hover:bg-(--background)`} key={note._id} onClick={() => {layoutMode === "create"? confirmSave(note._id): setSelectedNote(note._id)}
+              <div className={`p-4 rounded-lg text-base cursor-pointer ${layoutMode === "view" ? selectedNote === note._id ? 'border border-(--border) bg-(--background)' : '' : ""
+                } hover:bg-(--background)`} key={note._id} onClick={() => { layoutMode === "create" ? confirmSave(note._id) : setSelectedNote(note._id) }
                 }>
                 <h1 className="text-white font-medium">{note.title}</h1>
                 <p
@@ -128,7 +157,16 @@ function NotesInterface() {
             ))}
         </div>
         <div className="absolute bottom-0 left-0 px-6 py-4 border-t border-t-(--border) w-full bg-(--background) border-r border-r-(--border) scroll-hii">
-          <div className="w-full border border-(--border) bg-(--background) rounded-md px-3 py-0.5 cursor-pointer" onClick={() => setLayoutMode("create")}>
+          <div className="w-full border border-(--border) bg-(--background) rounded-md px-3 py-0.5 cursor-pointer" onClick={() => {
+            setLayoutMode("create");
+
+            setNoteContent({
+              title: "",
+              content: "",
+              tag: ""
+            });
+
+          }}>
             <p className="text-center text-white hover:text-indigo-400"><i className="bi bi-plus-lg"></i> New note</p>
           </div>
         </div>
@@ -136,17 +174,27 @@ function NotesInterface() {
       <div className="min-w-4/5">
         <div className="w-full border-b border-b-(--border) px-8 py-4 flex items-center justify-between">
           <div className="text-white">
-            <h1>Notes / {layoutMode === "view" ? activeNote?.['title'] : noteTitle}</h1>
+            <h1>Notes / {layoutMode === "view" ? activeNote?.['title'] : noteContent.title}</h1>
           </div>
           <div className="flex items-center gap-4">
-            <i className="bi bi-floppy text-white cursor-pointer hover:text-indigo-400" onClick={() => addNotes()}></i>
-            <i className="bi bi-trash text-white cursor-pointer hover:text-indigo-400"></i>
-            <i className="bi bi-x-circle text-white cursor-pointer hover:text-red-600" onClick={() => setLayoutMode("view")}></i>
+            {layoutMode === "create" ? <i className="bi bi-floppy text-white cursor-pointer hover:text-indigo-400" onClick={() => {
+              addNotes()
+            }}></i> : ""}
+            <i className="bi bi-trash text-white cursor-pointer hover:text-indigo-400" onClick={() => deleteNote(activeNote?.['_id'])}></i>
+            {
+              layoutMode === "create" ? <i className="bi bi-x-circle text-white cursor-pointer hover:text-red-600" onClick={() => {
+                setLayoutMode("view"); setNoteContent({
+                  title: "",
+                  content: "",
+                  tag: ""
+                })
+              }}></i> : ""
+            }
           </div>
         </div>
         <div className="p-8 flex flex-col w-full">
           <div className="w-full border-b border-b-(--border) pb-6">
-            <input type="text" onChange={(e) => {setNoteTitle(e.target.value); setNoteContent({ ...noteContent, title: e.target.value }) }} value={layoutMode === "view" ? activeNote?.['title'] || "" : ''} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view" ? true : false} required name="noteTitle" id="noteTitle" />
+            <input type="text" onChange={(e) => { setNoteContent({ ...noteContent, title: e.target.value }) }} value={layoutMode === "view" ? activeNote?.['title'] || "" : noteContent.title} className={`w-full border border-(--border) p-2 rounded-md text-white font-medium ${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} readOnly={layoutMode === "view" ? true : false} required name="noteTitle" id="noteTitle" />
             {/* <h1 className="border border-(--border) p-2 rounded-md text-white font-medium">
               {activeNote?.["title"]}
             </h1> */}
@@ -163,7 +211,8 @@ function NotesInterface() {
                   <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />
                   <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
                 </svg>
-                <span className="text-sm">{layoutMode === "view" ? activeNote?.["createdAt"] : ""}</span>
+                {layoutMode === "view" ? <span className="text-sm">{activeNote?.createdAt &&
+                  new Date(activeNote.createdAt).toLocaleDateString()}</span> : ""}
               </div>
               <div className="flex items-center gap-2">
                 <svg
@@ -177,14 +226,14 @@ function NotesInterface() {
                   <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0" />
                   <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1m0 5.586 7 7L13.586 9l-7-7H2z" />
                 </svg>
-                <input type="text" value={layoutMode === "view" ? activeNote?.["tag"] || "" : ""} readOnly={layoutMode === "view" ? true : false} required className={`${layoutMode === "view" ? " cursor-default focus:outline-none" : ""}`} onChange={(e) => setNoteContent({ ...noteContent, tag: e.target.value })} />
+                <input type="text" value={layoutMode === "view" ? activeNote?.["tag"] || "" : noteContent.tag} readOnly={layoutMode === "view" ? true : false} required className={`${layoutMode === "view" ? "border border-(--border) px-2.5 rounded-2xl cursor-pointer text-[13px] focus:outline-none bg-indigo-400 text-gray-800 field-sizing-content" : ""}`} onChange={(e) => setNoteContent({ ...noteContent, tag: e.target.value })} />
                 {/* <span className="text-sm">{activeNote?.["tag"]}</span> */}
               </div>
             </div>
           </div>
         </div>
         <div className="p-8 w-full">
-          <textarea name="" id="" className={`text-white text-base w-full resize-none focus:outline-none h-100 ${layoutMode === "view" ? " cursor-default" : ""}`} value={layoutMode === "view" ? activeNote?.["content"] || "" : ""} readOnly={layoutMode === "view" ? true : false} required onChange={(e) => setNoteContent({ ...noteContent, content: e.target.value })}></textarea>
+          <textarea name="" id="" className={`text-white text-base w-full resize-none focus:outline-none h-100 ${layoutMode === "view" ? " cursor-default" : ""}`} value={layoutMode === "view" ? activeNote?.["content"] || "" : noteContent.content} readOnly={layoutMode === "view" ? true : false} required onChange={(e) => setNoteContent({ ...noteContent, content: e.target.value })}></textarea>
           {/* <div className="text-white text-base">{activeNote?.["content"]}</div> */}
         </div>
       </div>
