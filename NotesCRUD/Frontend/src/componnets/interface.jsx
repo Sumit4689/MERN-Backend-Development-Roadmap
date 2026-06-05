@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Tiptap from "./Tiptap";
 
 function NotesInterface() {
   const [notes, setNotes] = useState([]);
@@ -257,6 +258,7 @@ function NotesInterface() {
           </div>
         </div>
         <div className="p-8 w-full">
+          {/* <Tiptap/> */}
           <textarea name="" id="" className={`text-white text-base w-full resize-none focus:outline-none h-100 ${layoutMode === "view" ? " cursor-default" : ""}`} value={layoutMode === "view" ? activeNote?.["content"] || "" : noteContent.content} readOnly={layoutMode === "view" ? true : false} required onChange={(e) => setNoteContent({ ...noteContent, content: e.target.value })}></textarea>
           {/* <div className="text-white text-base">{activeNote?.["content"]}</div> */}
         </div>
